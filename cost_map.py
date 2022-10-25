@@ -1,4 +1,5 @@
 from importlib.util import set_loader
+from logging.config import valid_ident
 import cv2
 import numpy as np
 import math
@@ -10,6 +11,7 @@ class cost_map:
 		self.graphics = graphics
 		# self.graphics.scale = 400 # This value should be same as the pixel value of the image
 		self.inflation_radius = 18 # radius of our robot is 18 pixel or cm
+		self.gravity_scale = 10 # set the scale factor of the gravity map
 		self.graphics.environment.robots[0].set_bot_size(body_cm = 2*self.inflation_radius)
 		#self.graphics.environment.width/height = 2
 		self.map_width = int(self.graphics.environment.width*self.graphics.scale)
@@ -68,8 +70,6 @@ class cost_map:
 		#It has nothing to do with brushfire, replace it
 		#A whilte pixel has value of 255, a black one is 0
 		#However, some block value may be dark gray
-		# self.costmap[200:400][0:-1]=128
-		#grid4=np.array([[0,1,0,0,0],[0,1,0,0,0],[0,1,0,0,0],[0,0,0,0,1],[0,0,0,0,1]],dtype=int)
 		grid=np.copy(self.costmap)
 		grid[grid == 0] = 1  #convert to island problem
 		grid[grid > 1] = 0
@@ -115,42 +115,23 @@ class cost_map:
                     # specifies that the point is one space away from the previous
 		# verifies that the brushfire map displays values limited from 2 to 255 ()
 		value=brushMap - 2000*grid # Ensuring the starting points are negative
-		value[value < 0] = 0  # Setting the walls to zero
-		
-		# Need to add the inflation here !!!
-		
-		value[value > 255] = 255 # normalizing values to a 255 max
-		bigNum= -1
-		for i in range(L):
-			for j in range (L):
-				bigNum = max(bigNum,value[i][j])
-		value= (255/bigNum)*value
-		for i in range(L):
-			for j in range (L):
-				value[i][j] = int(value[i][j])
+		value=value-self.inflation_radius # Inflation Time!
+		value[value < 0] = 0  # Setting the walls to a zero
 
-
-		gravMap=np.copy(value)
-		for i in range(L): # Gravity map (abs(r-255))
-			for j in range(L):
-				if gravMap[i][j] != 0:
-					gravMap[i][j] = abs(gravMap[i][j]-256)
-					if gravMap[i][j] < 0:
-						gravMap[i][j] =0
-					if gravMap[i][j] > 255:
-						gravMap[i][j] = 255
-				if gravMap[i][j] == 0:
-					gravMap[i][j] = 255
-		np.savetxt('Log/gravity_map3.csv',gravMap, delimiter=',')
+		bigNum=np.amax(value)
+		giga=1000000000
+		if self.gravity_scale*bigNum < giga:
+			value=self.gravity_scale*abs(value-bigNum)  # reverse the order of the cost map to make the gravity map and multiply by a scaling factor
+		value[value == self.gravity_scale*bigNum] =  giga # High cost associated with obstruction (10^9) Giga Chad
 		
-		self.costmap=np.copy(gravMap) # set our costmap (value) or our various gravity definitions as the output
+		self.costmap=value
 
 		np.savetxt('Log/cost_map.csv',self.costmap, delimiter=',')
 		pass
 
 	#scale costmap to 0 - 255 for visualization
 	def get_vis_map(self):
-		self.vis_map = np.uint8(255-self.costmap/4.0)
+		self.vis_map = np.uint8(255-self.costmap/12.0)
 		#self.vis_map=np.uint(255-self.costmap/1.5)  # better view of map
 		np.savetxt("Log/vismap.csv",self.vis_map, delimiter=',')   # np.savetxt("Log/vismap.txt",self.vis_map)
 
