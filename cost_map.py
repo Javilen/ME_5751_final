@@ -101,7 +101,7 @@ class cost_map:
 			if grid[x][y] == 0:
 				distance = max(distance,depth)
                 # ensures that the max distance is used from the number of depth steps
-			for [i,j] in ([x+1,y],[x-1,y],[x,y+1],[x,y-1]): 
+			for [i,j] in ([x+1,y],[x-1,y],[x,y+1],[x,y-1]):  # can modify for 8 directions here
                 # around the point of interest
 				if i >=0 and i < L and j >=0 and j < L and gridImage[i][j] == 0:  
                     # verifies the point to peak is both in the grid and open
@@ -119,9 +119,8 @@ class cost_map:
 		value[value < 0] = 0  # Setting the walls to a zero
 
 		bigNum=np.amax(value)
-		giga=1000000000
-		if self.gravity_scale*bigNum < giga:
-			value=self.gravity_scale*abs(value-bigNum)  # reverse the order of the cost map to make the gravity map and multiply by a scaling factor
+		giga=math.inf
+		value=self.gravity_scale*abs(value-bigNum)  # reverse the order of the cost map to make the gravity map and multiply by a scaling factor
 		value[value == self.gravity_scale*bigNum] =  giga # High cost associated with obstruction (10^9) Giga Chad
 		
 		self.costmap=value
@@ -131,7 +130,7 @@ class cost_map:
 
 	#scale costmap to 0 - 255 for visualization
 	def get_vis_map(self):
-		self.vis_map = np.uint8(255-self.costmap/12.0)
+		self.vis_map = np.uint8(255-self.costmap/16.0)
 		#self.vis_map=np.uint(255-self.costmap/1.5)  # better view of map
 		np.savetxt("Log/vismap.csv",self.vis_map, delimiter=',')   # np.savetxt("Log/vismap.txt",self.vis_map)
 
