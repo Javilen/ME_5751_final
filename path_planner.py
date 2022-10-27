@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 
 from bsTree import *
 from Path import *
+from cost_map import cost_map
 # from Queue import Queue
 
 
@@ -25,7 +26,7 @@ class path_planner:
 
 	
 		self.set_start(world_x = 0, world_y = 0)
-		self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+		self.set_goal(world_x = 10.0, world_y = 20.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
 
 		self.plan_path()
 		self._show_path()
@@ -98,14 +99,46 @@ class path_planner:
 		# The major program you are going to write!
 		# The following simply demo that how you can add pose to path
 		self.path.clear_path()
+		'''
+		# # # Our cost map is in the global frame while this method functions in the map frame where the robot always starts at zero with a specified end condition.
+		# grid=np.copy(self.costmap.costmap)
 
-		points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
-	
-		for p in points:
-			self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
-			
+		# # define occupied spaces only 1 = interference, 0 = free
+		# grid[grid != math.inf] = 0
+		# grid[grid == math.inf] = 1
+
+		'''
+		# Testing conversion from global to map coordinate system 
+		# addr=self.map2world(0,0)
+		# print(-addr[0],addr[1])
+		# print(self.costmap.costmap[int(addr[0])][int(addr[1])])
+
+
+
+
+
+
+
+
+		self.path.add_pose(Pose(100,100,0))
+
+
 		self.path.save_path(file_name="Log\path.csv")
 
+		#np.savetxt('Log/point.csv',grid, delimiter=',')
+
+
+
+
+
+		
+		points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
+	
+		# for p in points:
+		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+			
+		# self.path.save_path(file_name="Log\path.csv")
+	
 
 # bresenham algorithm for line generation on grid map
 # from http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
