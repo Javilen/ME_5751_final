@@ -1,8 +1,12 @@
+from cmath import cos
 import cv2
 import numpy as np
 import math
 import warnings
 from PIL import Image, ImageTk
+# Added some libraries
+import queue
+import itertools
 
 from bsTree import *
 from Path import *
@@ -113,6 +117,65 @@ class path_planner:
 		# print(-addr[0],addr[1])
 		# print(self.costmap.costmap[int(addr[0])][int(addr[1])])
 
+		# Set up initial conditions
+		#start_p=[[self.start_state_map.map_i,self.start_state_map.map_j] ]
+		points=[]
+		  # Set for the start condition
+		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
+		# set up queue and counter
+		count=itertools.count()
+		next(count)
+		pq=queue.PriorityQueue()
+		#print(int(len(self.costmap.costmap)))
+		stored_cost=math.inf*np.ones((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
+		visited=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
+		parent=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
+		pq.put([0, next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
+
+		goal_flag= False
+		'''
+		tick = 0
+		print("Start while")
+		tick=tick+1
+		print("queue?", pq.qsize())
+		value=pq.get_nowait()
+		#cost, itk, addr = pq.get()
+		print("queue haulted?", value)
+		'''
+		tick = 0
+		# issue: This continues to revisit previous points
+		while   tick < 100 : #pq.qsize() > 0 and goal_flag == False :
+			tick=tick+1
+			print("queue?", tick)
+			cost, itk, addr = pq.get()
+			print("queue haulted?", tick)
+			print(addr)
+			points.append(addr)
+			if addr == end_point:
+				goal_flag = True
+				break
+			x=addr[0]
+			y=addr[1]
+			visited[x][y]= True
+			parent[x][y]= True
+			for [i,j] in ([x+1,y], [x-1,y], [x,y+1], [x,y-1]):
+				if parent[i][j] == True:
+					continue  # dont bother searching parent nodes since you dont backtrack
+				cost_path=self.costmap.costmap[i][j]
+				if visited[i][j] == False:
+					stored_cost[i][j] = cost_path + cost
+					pq.put([stored_cost[i][j], next(count),[i,j]])
+					visited[i][j] == True
+				if visited[i][j] == True:
+					if stored_cost[i][j] > (cost_path + cost):
+						stored_cost[i][j] = cost_path + cost
+						pq.put([stored_cost[i][j], next(count),[i,j]])
+
+
+
+
+		print("done with while")
+		print(points)
 
 
 
@@ -120,10 +183,113 @@ class path_planner:
 
 
 
-		self.path.add_pose(Pose(100,100,0))
 
 
-		self.path.save_path(file_name="Log\path.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		'''
+		# Attempt 10/27 does not work at all
+		# Set up initial conditions
+		start_p=[[self.start_state_map.map_i,self.start_state_map.map_j] ]
+		points=[]
+		  # Set for the start condition
+		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
+		#print(points)
+		#print(self.costmap.costmap[points[0]][points[1]])
+
+		#print(Pose(map_i=points[0],map_j=points[1],theta=0))
+		#self.path.add_pose(Pose(map_i=points[0],map_j=points[1],theta=0))
+
+		# set up queue and counter
+		count=itertools.count()
+		pq=queue.PriorityQueue()
+		#print(int(len(self.costmap.costmap)))
+		stored_cost=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
+		#stored_cost[points]=self.costmap.costmap[points[0]][points[1]]
+		node=[self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j],next(count),[250,250]]
+		pq.put(node)
+		stored_cost[self.start_state_map.map_i][self.start_state_map.map_j]= self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j]
+		#pq.put([math.inf,69])
+		break_flag = False
+		g=0
+		while   pq.qsize() > 0 and break_flag == False and g < 10:  # pq.empty == False
+			cost, k, addr = pq.get()
+			#print('size of the queue',pq.qsize())
+			points.append(addr)
+			if addr == end_point:
+				break
+			stored_cost[addr[0]][addr[1]]=cost
+			g+=1
+
+			for [i,j] in ([addr[0]+1,addr[1]],[addr[0]-1,addr[1]],[addr[0],addr[1]+1],[addr[0],addr[1]-1]):
+				node=[self.costmap.costmap[i][j]+cost,next(count),[i,j]]
+				if self.costmap.costmap[i][j] == math.inf:
+					break
+				print(node)
+				if stored_cost[i][j] == 0:
+					pq.put(node)
+					stored_cost[i][j] = self.costmap.costmap[i][j] + cost
+				else:
+					if stored_cost[i][j] > (self.costmap.costmap[i][j] + cost):
+						#print("stored_cost",stored_cost[i][j])
+						#print("cost after travel", (self.costmap.costmap[i][j] + cost))
+						pq.put(node)
+						stored_cost[i][j] == self.costmap.costmap[i][j] + cost
+					#stored_cost[addr[0]][addr[1]]=self.costmap.costmap[addr[0]][addr[1]]
+			# 		else: 
+			# 			if stored_cost[addr[0]][addr[1]] > self.costmap.costmap[addr[0]][addr[1]]:
+			# 				#pq.put(node)
+			# 				stored_cost[addr[0]][addr[1]]=self.costmap.costmap[addr[0]][addr[1]]
+						
+			# 		print(i,j)
+			#print([cost,k,addr])
+
+
+
+			#print(pq.qsize())
+		print("out")
+		#print(points)
+
+
+		'''
+
+
+
+
+		# self.path.add_pose(Pose(100,100,0))
+		# self.path.print_path()
+
+
+		#self.path.save_path(file_name="Log\path.csv")
 
 		#np.savetxt('Log/point.csv',grid, delimiter=',')
 
@@ -132,10 +298,12 @@ class path_planner:
 
 
 		
-		points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
+		# # points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
+		# self.path.print_path()
 	
 		# for p in points:
 		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+		# self.path.print_path()
 			
 		# self.path.save_path(file_name="Log\path.csv")
 	

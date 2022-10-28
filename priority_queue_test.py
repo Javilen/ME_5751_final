@@ -52,19 +52,26 @@ pq=queue.PriorityQueue()
 
 # we make a tuple consisting on costmap value, tiebreaker value as well as the address in reference to our vehicle map
 
-pq.put([3500, next(count), [1,2]])
-pq.put([3500, next(count), [1,2]])
-pq.put([3400, next(count), [420,99]])
-pq.put([3900, next(count), [10,20]])
-pq.put([3500, next(count), [1,2]])
+pq.put([3500, next(count), [1,22]])
+# pq.put([3500, next(count), [1,2]])
+# pq.put([3400, next(count), [420,99]])
+# pq.put([3900, next(count), [10,20]])
+# pq.put([3500, next(count), [1,2]])
+
+
+path = []
+
+path.append(pq.get())
+
+print(path)
 
 #print(pq.empty())
 #print(pq.get())
-path=[]
-while pq.empty() == False: # prevents our hold condition for overdrawing from the queue
-    value=pq.get()
-    path.append(value[2])  # adds to our indicated path to the path list 
-print(path)
+# path=[]
+# while pq.empty() == False: # prevents our hold condition for overdrawing from the queue
+#     value=pq.get()
+#     path.append(value[2])  # adds to our indicated path to the path list 
+# print(path)
 
 
 
