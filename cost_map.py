@@ -17,7 +17,7 @@ class cost_map:
 		self.map_width = int(self.graphics.environment.width*self.graphics.scale)
 		self.map_height = int(self.graphics.environment.height*self.graphics.scale)
 		try:
-			self.load_map(map = "maps/Group_testmap1.png") #load map  maps/testmap.png  maps/smol_test_map.png
+			self.load_map(map = "maps/Group_testmap3.png") #load map  maps/testmap.png  maps/smol_test_map.png
 		except:
 			self.graphics.show_map_button.configure(state="disabled")
 			print ("no map loaded") #if fail to find the map png

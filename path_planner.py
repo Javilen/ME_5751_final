@@ -1,5 +1,3 @@
-from cmath import cos
-from multiprocessing.sharedctypes import Value
 import cv2
 import numpy as np
 import math
@@ -105,7 +103,7 @@ class path_planner:
 		# The following simply demo that how you can add pose to path
 		self.path.clear_path()
 		# Huristic constant
-		H=12
+		H=12 #12
 		option = 1 # 1 2 3 4
 		def Heuristics(x,y):
 			match option:
@@ -153,15 +151,18 @@ class path_planner:
 		pq=queue.PriorityQueue()
 		pq.put([stored_cost[self.start_state_map.map_i][self.start_state_map.map_j], next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
 		
-
+		stop_flag=False
 		if self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j] == math.inf or self.costmap.costmap[self.goal_state_map.map_i][self.goal_state_map.map_j] == math.inf :
+			stop_flag = True
 			goal_flag = True
+			final_cost = 0
 			print("Start or end goal out of bounds")
 		else:
 			goal_flag = False
+			
 		# goal_flag = False
 
-		while pq.qsize() > 0 or goal_flag == False :
+		while pq.qsize() > 0 and goal_flag == False and stop_flag == False:
 			cost, counter,[x,y] = pq.get()
 			#print([x,y], end_point)
 			# breakout condition if goal point is rached
@@ -215,7 +216,7 @@ class path_planner:
 		#print("end point" ,end_point , "parent",dict_node_parent[str(end_point)])
 
 		# backtrack queue through the dictinary node parent relationship
-		if goal_flag == True:
+		if goal_flag == True and stop_flag == False:
 			points.append(end_point)
 			track=dict_node_parent[str(end_point)]
 			points.append(track)
@@ -233,7 +234,9 @@ class path_planner:
 		# np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
 		
 		# add points to the map
-		if goal_flag == True:
+		if goal_flag == False:
+			final_cost = 0
+		if goal_flag == True and stop_flag == False:
 			for p in points:
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
 			self.path.print_path()
