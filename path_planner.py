@@ -31,7 +31,7 @@ class path_planner:
 
 	
 		self.set_start(world_x = 0, world_y = 0)
-		self.set_goal(world_x = -10.0, world_y = -50.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+		self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
 
 		self.plan_path()
 		self._show_path()
@@ -128,7 +128,7 @@ class path_planner:
 
 		# set up costmap with boundary at the edges
 		cost_map_copy=np.copy(self.costmap.costmap)
-		for i in range(500):
+		for i in range(len(self.costmap.costmap)):
 			cost_map_copy[i][0] = math.inf
 			cost_map_copy[0][i] = math.inf
 			cost_map_copy[i][500-1] = math.inf
@@ -167,6 +167,7 @@ class path_planner:
 			# breakout condition if goal point is rached
 			if [x,y] == end_point:
 				goal_flag = True
+				final_cost=cost
 				#print('pushed point', [x,y], "goal point", end_point)
 				break
 			# if parent (popped before)  continue logic since we dont want this
@@ -236,6 +237,7 @@ class path_planner:
 			for p in points:
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
 			self.path.print_path()
+		print("final cost: ", float("{:.1f}".format(final_cost)),"number of iterations: ", count)
 	
 		# for p in points:
 		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
