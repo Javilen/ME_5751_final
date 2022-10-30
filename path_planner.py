@@ -1,4 +1,5 @@
 from cmath import cos
+from multiprocessing.sharedctypes import Value
 import cv2
 import numpy as np
 import math
@@ -103,6 +104,20 @@ class path_planner:
 		# The major program you are going to write!
 		# The following simply demo that how you can add pose to path
 		self.path.clear_path()
+		# Huristic constant
+		H=12
+		option = 1 # 1 2 3 4
+		def Heuristics(x,y):
+			match option:
+				case 1:  # euclidian distance
+					val=math.sqrt((x-self.goal_state_map.map_i)**2+(y-self.goal_state_map.map_j)**2)
+				case 2:  # arithmetic mean
+					val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))/2
+				case 3:  # geometric mean
+					val=math.sqrt(abs(x-self.goal_state_map.map_i)*abs(y-self.goal_state_map.map_j))
+				case 4:  # arithmetic mean with right shift
+					val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
+			return  val
 
 
 		# Set up initial conditions
@@ -110,13 +125,6 @@ class path_planner:
 		points=[]
 		  # Set for the start condition
 		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
-		# set up queue and counter
-		#count=itertools.count()
-		#next(count)
-		#pq=queue.PriorityQueue()
-		#print(int(len(self.costmap.costmap)))
-		#stored_cost=math.inf*np.ones((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
-
 
 		# set up costmap with boundary at the edges
 		cost_map_copy=np.copy(self.costmap.costmap)
@@ -135,13 +143,9 @@ class path_planner:
 		seen_map[self.start_state_map.map_i][self.start_state_map.map_j]= True
 		#np.savetxt('Log/seen_map.csv',seen_map, delimiter=',')
 
-		# # node parent dictionary prealocation (may not be needed)
+		# node parent dictionary
 		dict_node_parent={}
-		# for i in range(500):
-		# 	for j in range(500):
-		# 		dict_node_parent[str([i,j])]=[]
-		
-		#print(dict_node_parent[str([1,1])])
+
 
 		# Configure queue and counter
 		count=itertools.count()
@@ -156,7 +160,6 @@ class path_planner:
 		else:
 			goal_flag = False
 		# goal_flag = False
-
 
 		while pq.qsize() > 0 or goal_flag == False :
 			cost, counter,[x,y] = pq.get()
@@ -173,11 +176,9 @@ class path_planner:
 			parent_map[x][y] = True
 			# Set parent that will be used for back drive dictornary list 
 			parent_value= [x,y]
-
 			# set breakout condition for testing
 			#if counter > 48:
 			#	break
-
 			#goal_flag = True # Lets do this for one interation
 
 			# search connected nodes
@@ -187,23 +188,26 @@ class path_planner:
 				if cost_reference == math.inf:
 					continue
 				if seen_map[i][j]==False and parent_map[i][j] == False:
+					# new cost function + Heuristic
+					new_cost=cost_reference+cost+H*Heuristics(i,j)
 					# add to queue
-					pq.put([cost_reference+cost,next(count),[i,j]])
+					pq.put([new_cost,next(count),[i,j]])
 					# save node parent relationship
 					dict_node_parent[str([i,j])]=[x,y]
 					# specify that this has been seen
 					seen_map[i][j] = True
 					# add to stored cost matrix
-					stored_cost[i][j] = cost_reference + cost
+					stored_cost[i][j] = new_cost
 
-
-				if seen_map[i][j]==True and (stored_cost[i][j] > cost_reference + cost) and parent_map[i][j] == False:
+				if seen_map[i][j]==True and (stored_cost[i][j] > cost_reference+cost+H*Heuristics(i,j)) and parent_map[i][j] == False:
+					# new cost function + Heuristic
+					new_cost=cost_reference+cost+Heuristics(i,j)
 					# add to queue
-					pq.put([cost_reference+cost,next(count),[i,j]])
+					pq.put([new_cost,next(count),[i,j]])
 					# save node parent relationship
 					dict_node_parent[str([i,j])]=[x,y]
 					# add to stored cost matrix
-					stored_cost[i][j] = cost_reference + cost
+					stored_cost[i][j] = new_cost
 				# if parent_map[i][j] == True:
 				# 	print('parent node dont back track')
 
@@ -228,203 +232,10 @@ class path_planner:
 		# np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
 		
 		# add points to the map
-		for p in points:
-			self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
-		self.path.print_path()
-
-
-
-		# visited=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
-		# parent=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
-		# pq.put([0, next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
-
-
-
-
-
-
-
-
-
-
-
-		'''
-		goal_flag= False
-
-
-
-		
-		# tick = 0
-		# print("Start while")
-		# tick=tick+1
-		# print("queue?", pq.qsize())
-		# value=pq.get_nowait()
-		# #cost, itk, addr = pq.get()
-		# print("queue haulted?", value)
-		
-		tick = 0
-		# issue: This continues to revisit previous points
-		while pq.qsize() > 0 and goal_flag==False : #pq.qsize() > 0 and goal_flag == False :
-			tick=tick+1
-			#print("queue?", tick)
-			cost, itk, addr = pq.get()
-			#print("queue haulted?", tick)
-			#print(addr)
-			points.append(addr)
-			if addr == end_point:
-				goal_flag = True
-				print("Goal")
-				break
-			x=addr[0]
-			y=addr[1]
-			visited[x][y]= True
-			parent[x][y]= True
-			for [i,j] in ([x+1,y], [x-1,y], [x,y+1], [x,y-1]):
-				cost_path=self.costmap.costmap[i][j]
-				#print(cost_path, [i,j])
-				#if parent[i][j] == True:
-					#continue  # dont bother searching parent nodes since you dont backtrack
-				if visited[i][j] == False:
-					stored_cost[i][j] = cost_path + cost
-					print("not visited",stored_cost[i][j], next(count),[i,j] )
-					pq.put([cost_path + cost, next(count),[i,j]])
-					visited[i][j] = True
-				if visited[i][j] == True:
-					if stored_cost[i][j] > (cost_path + cost):  # messed with this
-						stored_cost[i][j] = cost_path + cost
-						print("visited",stored_cost[i][j], next(count),[i,j] )
-						pq.put([cost_path + cost, next(count),[i,j]])
-				
-
-
-
-
-		print("done with while")
-		#print(points)
-
-
-		np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
-
-
-
-
-		'''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		'''
-		# Attempt 10/27 does not work at all
-		# Set up initial conditions
-		start_p=[[self.start_state_map.map_i,self.start_state_map.map_j] ]
-		points=[]
-		  # Set for the start condition
-		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
-		#print(points)
-		#print(self.costmap.costmap[points[0]][points[1]])
-
-		#print(Pose(map_i=points[0],map_j=points[1],theta=0))
-		#self.path.add_pose(Pose(map_i=points[0],map_j=points[1],theta=0))
-
-		# set up queue and counter
-		count=itertools.count()
-		pq=queue.PriorityQueue()
-		#print(int(len(self.costmap.costmap)))
-		stored_cost=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
-		#stored_cost[points]=self.costmap.costmap[points[0]][points[1]]
-		node=[self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j],next(count),[250,250]]
-		pq.put(node)
-		stored_cost[self.start_state_map.map_i][self.start_state_map.map_j]= self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j]
-		#pq.put([math.inf,69])
-		break_flag = False
-		g=0
-		while   pq.qsize() > 0 and break_flag == False and g < 10:  # pq.empty == False
-			cost, k, addr = pq.get()
-			#print('size of the queue',pq.qsize())
-			points.append(addr)
-			if addr == end_point:
-				break
-			stored_cost[addr[0]][addr[1]]=cost
-			g+=1
-
-			for [i,j] in ([addr[0]+1,addr[1]],[addr[0]-1,addr[1]],[addr[0],addr[1]+1],[addr[0],addr[1]-1]):
-				node=[self.costmap.costmap[i][j]+cost,next(count),[i,j]]
-				if self.costmap.costmap[i][j] == math.inf:
-					break
-				print(node)
-				if stored_cost[i][j] == 0:
-					pq.put(node)
-					stored_cost[i][j] = self.costmap.costmap[i][j] + cost
-				else:
-					if stored_cost[i][j] > (self.costmap.costmap[i][j] + cost):
-						#print("stored_cost",stored_cost[i][j])
-						#print("cost after travel", (self.costmap.costmap[i][j] + cost))
-						pq.put(node)
-						stored_cost[i][j] == self.costmap.costmap[i][j] + cost
-					#stored_cost[addr[0]][addr[1]]=self.costmap.costmap[addr[0]][addr[1]]
-			# 		else: 
-			# 			if stored_cost[addr[0]][addr[1]] > self.costmap.costmap[addr[0]][addr[1]]:
-			# 				#pq.put(node)
-			# 				stored_cost[addr[0]][addr[1]]=self.costmap.costmap[addr[0]][addr[1]]
-						
-			# 		print(i,j)
-			#print([cost,k,addr])
-
-
-
-			#print(pq.qsize())
-		print("out")
-		#print(points)
-
-
-		'''
-
-
-
-
-		# self.path.add_pose(Pose(100,100,0))
-		# self.path.print_path()
-
-
-		#self.path.save_path(file_name="Log\path.csv")
-
-		#np.savetxt('Log/point.csv',grid, delimiter=',')
-
-
-
-
-
-		
-		# # points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
-		# self.path.print_path()
+		if goal_flag == True:
+			for p in points:
+				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+			self.path.print_path()
 	
 		# for p in points:
 		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
