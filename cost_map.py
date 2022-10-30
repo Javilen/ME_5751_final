@@ -101,7 +101,7 @@ class cost_map:
 			if grid[x][y] == 0:
 				distance = max(distance,depth)
                 # ensures that the max distance is used from the number of depth steps
-			for [i,j] in ([x+1,y],[x-1,y],[x,y+1],[x,y-1]):  # can modify for 8 directions here
+			for [i,j] in ([x+1,y],[x-1,y],[x,y+1],[x,y-1],[x+1,y+1],[x-1,y+1],[x-1,y-1]):  # can modify for 8 directions here  for [i,j] in ([x+1,y],[x-1,y],[x,y+1],[x,y-1]):
                 # around the point of interest
 				if i >=0 and i < L and j >=0 and j < L and gridImage[i][j] == 0:  
                     # verifies the point to peak is both in the grid and open

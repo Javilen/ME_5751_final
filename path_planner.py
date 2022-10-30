@@ -30,7 +30,7 @@ class path_planner:
 
 	
 		self.set_start(world_x = 0, world_y = 0)
-		self.set_goal(world_x = 10.0, world_y = 20.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+		self.set_goal(world_x = -10.0, world_y = -50.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
 
 		self.plan_path()
 		self._show_path()
@@ -103,19 +103,7 @@ class path_planner:
 		# The major program you are going to write!
 		# The following simply demo that how you can add pose to path
 		self.path.clear_path()
-		'''
-		# # # Our cost map is in the global frame while this method functions in the map frame where the robot always starts at zero with a specified end condition.
-		# grid=np.copy(self.costmap.costmap)
 
-		# # define occupied spaces only 1 = interference, 0 = free
-		# grid[grid != math.inf] = 0
-		# grid[grid == math.inf] = 1
-
-		'''
-		# Testing conversion from global to map coordinate system 
-		# addr=self.map2world(0,0)
-		# print(-addr[0],addr[1])
-		# print(self.costmap.costmap[int(addr[0])][int(addr[1])])
 
 		# Set up initial conditions
 		#start_p=[[self.start_state_map.map_i,self.start_state_map.map_j] ]
@@ -123,67 +111,197 @@ class path_planner:
 		  # Set for the start condition
 		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
 		# set up queue and counter
-		count=itertools.count()
-		next(count)
-		pq=queue.PriorityQueue()
+		#count=itertools.count()
+		#next(count)
+		#pq=queue.PriorityQueue()
 		#print(int(len(self.costmap.costmap)))
-		stored_cost=math.inf*np.ones((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
-		visited=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
-		parent=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
-		pq.put([0, next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
+		#stored_cost=math.inf*np.ones((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
 
+
+		# set up costmap with boundary at the edges
+		cost_map_copy=np.copy(self.costmap.costmap)
+		for i in range(500):
+			cost_map_copy[i][0] = math.inf
+			cost_map_copy[0][i] = math.inf
+			cost_map_copy[i][500-1] = math.inf
+			cost_map_copy[500-1][i] = math.inf
+		#np.savetxt('Log/cost_map_copy.csv',cost_map_copy, delimiter=',')
+		stored_cost=math.inf*np.ones((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=int)
+		stored_cost[self.start_state_map.map_i][self.start_state_map.map_j] = 0
+		#np.savetxt('Log/distance_from_start.csv',distance_from_start, delimiter=',')
+		parent_map=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
+		#np.savetxt('Log/parent_map.csv',parent_map, delimiter=',')
+		seen_map=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
+		seen_map[self.start_state_map.map_i][self.start_state_map.map_j]= True
+		#np.savetxt('Log/seen_map.csv',seen_map, delimiter=',')
+
+		# # node parent dictionary prealocation (may not be needed)
+		dict_node_parent={}
+		# for i in range(500):
+		# 	for j in range(500):
+		# 		dict_node_parent[str([i,j])]=[]
+		
+		#print(dict_node_parent[str([1,1])])
+
+		# Configure queue and counter
+		count=itertools.count()
+		#next(count)  # Iterate with this command
+		pq=queue.PriorityQueue()
+		pq.put([stored_cost[self.start_state_map.map_i][self.start_state_map.map_j], next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
+		
+
+		if self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j] == math.inf or self.costmap.costmap[self.goal_state_map.map_i][self.goal_state_map.map_j] == math.inf :
+			goal_flag = True
+			print("impossible start / goal conditions")
+		else:
+			goal_flag = False
+		# goal_flag = False
+
+
+		while pq.qsize() > 0 or goal_flag == False :
+			cost, counter,[x,y] = pq.get()
+			#print([x,y], end_point)
+			# breakout condition if goal point is rached
+			if [x,y] == end_point:
+				goal_flag = True
+				print('pushed point', [x,y], "goal point", end_point)
+				break
+			# if parent (popped before)  continue logic since we dont want this
+			if parent_map[x][y] == True:
+				continue
+			# set value as parent that will not be popped again
+			parent_map[x][y] = True
+			# Set parent that will be used for back drive dictornary list 
+			parent_value= [x,y]
+
+			# set breakout condition for testing
+			#if counter > 48:
+			#	break
+
+			#goal_flag = True # Lets do this for one interation
+
+			# search connected nodes
+			for [i,j] in ([x+1,y], [x-1,y], [x,y+1], [x,y-1]):
+				cost_reference=cost_map_copy[i][j]
+				#print("cost: ",cost, "cost Reference: ", cost_reference, "cost + costReference: ", cost+cost_reference)
+				if cost_reference == math.inf:
+					continue
+				if seen_map[i][j]==False and parent_map[i][j] == False:
+					# add to queue
+					pq.put([cost_reference+cost,next(count),[i,j]])
+					# save node parent relationship
+					dict_node_parent[str([i,j])]=[x,y]
+					# specify that this has been seen
+					seen_map[i][j] = True
+					# add to stored cost matrix
+					stored_cost[i][j] = cost_reference + cost
+
+
+				if seen_map[i][j]==True and (stored_cost[i][j] > cost_reference + cost) and parent_map[i][j] == False:
+					# add to queue
+					pq.put([cost_reference+cost,next(count),[i,j]])
+					# save node parent relationship
+					dict_node_parent[str([i,j])]=[x,y]
+					# add to stored cost matrix
+					stored_cost[i][j] = cost_reference + cost
+				# if parent_map[i][j] == True:
+				# 	print('parent node dont back track')
+
+		print("end point" ,end_point , "parent",dict_node_parent[str(end_point)])
+
+		# backtrack queue through the dictinary node parent relationship
+		points.append(end_point)
+		track=dict_node_parent[str(end_point)]
+		points.append(track)
+		while track != [self.start_state_map.map_i, self.start_state_map.map_j]:
+			points.append(track)
+			track=dict_node_parent[str(track)]
+		points.append([self.start_state_map.map_i, self.start_state_map.map_j])
+		print(points)
+
+		# Print maps to check
+		np.savetxt('Log/parent_map.csv',parent_map, delimiter=',')
+		np.savetxt('Log/seen_map.csv',seen_map, delimiter=',')
+		np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
+			
+
+
+
+		# visited=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
+		# parent=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
+		# pq.put([0, next(count), [self.start_state_map.map_i, self.start_state_map.map_j] ]) # start with zero cost here
+
+
+
+
+
+
+
+
+
+
+
+		'''
 		goal_flag= False
-		'''
-		tick = 0
-		print("Start while")
-		tick=tick+1
-		print("queue?", pq.qsize())
-		value=pq.get_nowait()
-		#cost, itk, addr = pq.get()
-		print("queue haulted?", value)
-		'''
+
+
+
+		
+		# tick = 0
+		# print("Start while")
+		# tick=tick+1
+		# print("queue?", pq.qsize())
+		# value=pq.get_nowait()
+		# #cost, itk, addr = pq.get()
+		# print("queue haulted?", value)
+		
 		tick = 0
 		# issue: This continues to revisit previous points
-		while   tick < 100 : #pq.qsize() > 0 and goal_flag == False :
+		while pq.qsize() > 0 and goal_flag==False : #pq.qsize() > 0 and goal_flag == False :
 			tick=tick+1
-			print("queue?", tick)
+			#print("queue?", tick)
 			cost, itk, addr = pq.get()
-			print("queue haulted?", tick)
-			print(addr)
+			#print("queue haulted?", tick)
+			#print(addr)
 			points.append(addr)
 			if addr == end_point:
 				goal_flag = True
+				print("Goal")
 				break
 			x=addr[0]
 			y=addr[1]
 			visited[x][y]= True
 			parent[x][y]= True
 			for [i,j] in ([x+1,y], [x-1,y], [x,y+1], [x,y-1]):
-				if parent[i][j] == True:
-					continue  # dont bother searching parent nodes since you dont backtrack
 				cost_path=self.costmap.costmap[i][j]
+				#print(cost_path, [i,j])
+				#if parent[i][j] == True:
+					#continue  # dont bother searching parent nodes since you dont backtrack
 				if visited[i][j] == False:
 					stored_cost[i][j] = cost_path + cost
-					pq.put([stored_cost[i][j], next(count),[i,j]])
-					visited[i][j] == True
+					print("not visited",stored_cost[i][j], next(count),[i,j] )
+					pq.put([cost_path + cost, next(count),[i,j]])
+					visited[i][j] = True
 				if visited[i][j] == True:
-					if stored_cost[i][j] > (cost_path + cost):
+					if stored_cost[i][j] > (cost_path + cost):  # messed with this
 						stored_cost[i][j] = cost_path + cost
-						pq.put([stored_cost[i][j], next(count),[i,j]])
+						print("visited",stored_cost[i][j], next(count),[i,j] )
+						pq.put([cost_path + cost, next(count),[i,j]])
+				
 
 
 
 
 		print("done with while")
-		print(points)
+		#print(points)
+
+
+		np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
 
 
 
 
-
-
-
-
+		'''
 
 
 
@@ -301,9 +419,9 @@ class path_planner:
 		# # points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
 		# self.path.print_path()
 	
-		# for p in points:
-		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
-		# self.path.print_path()
+		for p in points:
+			self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+		self.path.print_path()
 			
 		# self.path.save_path(file_name="Log\path.csv")
 	

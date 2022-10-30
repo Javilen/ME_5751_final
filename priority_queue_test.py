@@ -43,31 +43,43 @@ count=itertools.count()
 
 d={}
 
-# d[3500]=[3,2,0]  # cost and the address of the cost
-# d[2700]=[1,4,0]
-# d[3600]=[5,6,0]
-# d[24000]=[7,8,0]
+d[str([1,2])]=[3,4]
+d[str([3,4])]=[5,6]
+#print(d[str([1,2])])
+print(d)
+#print(d(str([1,2])))
+#print(d["[1,2]"])
 
-pq=queue.PriorityQueue()
+# # d[3500]=[3,2,0]  # cost and the address of the cost
+# # d[2700]=[1,4,0]
+# # d[3600]=[5,6,0]
+# # d[24000]=[7,8,0]
 
-# we make a tuple consisting on costmap value, tiebreaker value as well as the address in reference to our vehicle map
+# pq=queue.PriorityQueue()
 
-pq.put([3500, next(count), [1,22]])
-# pq.put([3500, next(count), [1,2]])
-# pq.put([3400, next(count), [420,99]])
-# pq.put([3900, next(count), [10,20]])
-# pq.put([3500, next(count), [1,2]])
+# # we make a tuple consisting on costmap value, tiebreaker value as well as the address in reference to our vehicle map
+
+# pq.put([3500, next(count), [0.0]])
+# # pq.put([3500, next(count), [1,0]])
+# # pq.put([3400, next(count), [0,1]])
+# # pq.put([3900, next(count), [1,2]])
+# # pq.put([3500, next(count), [2,1]])
+# # pq.put([3900, next(count), [3,1]])
+# # pq.put([3500, next(count), [1,3]])
+# # pq.put([400, next(count), [2,3]])
+# # pq.put([3900, next(count), [3,2]])
+# # pq.put([300, next(count), [4,1]])
 
 
-path = []
+# # path = []
 
-path.append(pq.get())
+# # # path.append(pq.get())
 
-print(path)
+# # # print(path)
 
-#print(pq.empty())
-#print(pq.get())
-# path=[]
+# # #print(pq.empty())
+# print(pq.get())
+# # path=[]
 # while pq.empty() == False: # prevents our hold condition for overdrawing from the queue
 #     value=pq.get()
 #     path.append(value[2])  # adds to our indicated path to the path list 
