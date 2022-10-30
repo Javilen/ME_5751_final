@@ -152,7 +152,7 @@ class path_planner:
 
 		if self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j] == math.inf or self.costmap.costmap[self.goal_state_map.map_i][self.goal_state_map.map_j] == math.inf :
 			goal_flag = True
-			print("impossible start / goal conditions")
+			print("Start or end goal out of bounds")
 		else:
 			goal_flag = False
 		# goal_flag = False
@@ -164,7 +164,7 @@ class path_planner:
 			# breakout condition if goal point is rached
 			if [x,y] == end_point:
 				goal_flag = True
-				print('pushed point', [x,y], "goal point", end_point)
+				#print('pushed point', [x,y], "goal point", end_point)
 				break
 			# if parent (popped before)  continue logic since we dont want this
 			if parent_map[x][y] == True:
@@ -207,23 +207,30 @@ class path_planner:
 				# if parent_map[i][j] == True:
 				# 	print('parent node dont back track')
 
-		print("end point" ,end_point , "parent",dict_node_parent[str(end_point)])
+		#print("end point" ,end_point , "parent",dict_node_parent[str(end_point)])
 
 		# backtrack queue through the dictinary node parent relationship
-		points.append(end_point)
-		track=dict_node_parent[str(end_point)]
-		points.append(track)
-		while track != [self.start_state_map.map_i, self.start_state_map.map_j]:
+		if goal_flag == True:
+			points.append(end_point)
+			track=dict_node_parent[str(end_point)]
 			points.append(track)
-			track=dict_node_parent[str(track)]
-		points.append([self.start_state_map.map_i, self.start_state_map.map_j])
-		print(points)
+			while track != [self.start_state_map.map_i, self.start_state_map.map_j]:
+				points.append(track)
+				track=dict_node_parent[str(track)]
+			points.append([self.start_state_map.map_i, self.start_state_map.map_j])
+		else:
+			print("no path possible to goal")
+		# print(points)
 
-		# Print maps to check
-		np.savetxt('Log/parent_map.csv',parent_map, delimiter=',')
-		np.savetxt('Log/seen_map.csv',seen_map, delimiter=',')
-		np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
-			
+		# # Print maps to check
+		# np.savetxt('Log/parent_map.csv',parent_map, delimiter=',')
+		# np.savetxt('Log/seen_map.csv',seen_map, delimiter=',')
+		# np.savetxt('Log/stored_cost.csv',stored_cost, delimiter=',')
+		
+		# add points to the map
+		for p in points:
+			self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+		self.path.print_path()
 
 
 
@@ -419,9 +426,9 @@ class path_planner:
 		# # points = bresenham(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
 		# self.path.print_path()
 	
-		for p in points:
-			self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
-		self.path.print_path()
+		# for p in points:
+		# 	self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+		# self.path.print_path()
 			
 		# self.path.save_path(file_name="Log\path.csv")
 	
