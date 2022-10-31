@@ -105,20 +105,32 @@ class path_planner:
 		# Huristic constant
 		H=12 #12
 		option = 1 # change this 1-5 to test different options 
-		if option > 5 or option < 0 or isinstance(option,int) ==  False :
-			option = 5
+		# if option > 5 or option < 0 or isinstance(option,int) ==  False :
+		# 	option = 5
 		def Heuristics(x,y):
-			match option:
-				case 1:  # euclidian distance
-					val=math.sqrt((x-self.goal_state_map.map_i)**2+(y-self.goal_state_map.map_j)**2)
-				case 2:  # arithmetic mean
-					val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))/2
-				case 3:  # geometric mean
-					val=math.sqrt(abs(x-self.goal_state_map.map_i)*abs(y-self.goal_state_map.map_j))
-				case 4:  # arithmetic mean with right shift
-					val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
-				case 5:
-					val=0
+			# match option:
+			# 	case 1:  # euclidian distance
+			# 		val=math.sqrt((x-self.goal_state_map.map_i)**2+(y-self.goal_state_map.map_j)**2)
+			# 	case 2:  # arithmetic mean
+			# 		val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))/2
+			# 	case 3:  # geometric mean
+			# 		val=math.sqrt(abs(x-self.goal_state_map.map_i)*abs(y-self.goal_state_map.map_j))
+			# 	case 4:  # arithmetic mean with right shift
+			# 		val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
+			# 	case 5:
+			# 		val=0
+			if option == 1:
+				val=math.sqrt((x-self.goal_state_map.map_i)**2+(y-self.goal_state_map.map_j)**2)
+			if option == 2:
+				val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))/2
+			if option == 3:
+				val=math.sqrt(abs(x-self.goal_state_map.map_i)*abs(y-self.goal_state_map.map_j))
+			if option == 4:
+				val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
+			if option == 5:
+				val=0
+			else:
+				val=0
 			return  val
 
 
@@ -245,17 +257,27 @@ class path_planner:
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
 			self.path.print_path()
 		# print type of heristics used
-		match option:
-			case 1:
-				print("euclidian distance heuristics used with a gain of: ", H)
-			case 2:
-				print("Arithmetic mean distance heuristics used with a gain of: ", H)
-			case 3:
-				print("Geometric mean distance heuristics used with a gain of: ", H)
-			case 4:
-				print("Arithmetic mean distance with level shifting heuristics used with a gain of: ", H)
-			case 5:
-				print("dijkstra algorithm")
+		# match option:
+		# 	case 1:
+		# 		print("euclidian distance heuristics used with a gain of: ", H)
+		# 	case 2:
+		# 		print("Arithmetic mean distance heuristics used with a gain of: ", H)
+		# 	case 3:
+		# 		print("Geometric mean distance heuristics used with a gain of: ", H)
+		# 	case 4:
+		# 		print("Arithmetic mean distance with level shifting heuristics used with a gain of: ", H)
+		# 	case 5:
+		# 		print("dijkstra algorithm")
+		if option == 1:
+			print("euclidian distance heuristics used with a gain of: ", H)
+		if option == 2:
+			print("Arithmetic mean distance heuristics used with a gain of: ", H)
+		if option == 3:
+			print("Geometric mean distance heuristics used with a gain of: ", H)
+		if option == 4:
+			print("Arithmetic mean distance with level shifting heuristics used with a gain of: ", H)
+		if option == 5:
+			print("dijkstra algorithm")
 		# Display final cost and number of iterations used
 		print("final cost: ", float("{:.1f}".format(final_cost)),"number of iterations: ", count)
 	
