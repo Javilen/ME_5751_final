@@ -105,8 +105,8 @@ class path_planner:
 		# Huristic constant
 		H=12 #12
 		option = 1 # change this 1-5 to test different options 
-		# if option > 5 or option < 0 or isinstance(option,int) ==  False :
-		# 	option = 5
+		if option > 5 or option < 0 or isinstance(option,int) ==  False :
+			option = 5
 		def Heuristics(x,y):
 			# match option:
 			# 	case 1:  # euclidian distance
@@ -128,8 +128,6 @@ class path_planner:
 			if option == 4:
 				val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
 			if option == 5:
-				val=0
-			else:
 				val=0
 			return  val
 
