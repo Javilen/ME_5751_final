@@ -104,7 +104,9 @@ class path_planner:
 		self.path.clear_path()
 		# Huristic constant
 		H=12 #12
-		option = 1 # 1 2 3 4
+		option = 1 # change this 1-5 to test different options 
+		if option > 5 or option < 0 or isinstance(option,int) ==  False :
+			option = 5
 		def Heuristics(x,y):
 			match option:
 				case 1:  # euclidian distance
@@ -179,7 +181,7 @@ class path_planner:
 			# set value as parent that will not be popped again
 			parent_map[x][y] = True
 			# Set parent that will be used for back drive dictornary list 
-			parent_value= [x,y]
+			#parent_value= [x,y]
 			# set breakout condition for testing
 			#if counter > 48:
 			#	break
@@ -242,6 +244,19 @@ class path_planner:
 			for p in points:
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
 			self.path.print_path()
+		# print type of heristics used
+		match option:
+			case 1:
+				print("euclidian distance heuristics used with a gain of: ", H)
+			case 2:
+				print("Arithmetic mean distance heuristics used with a gain of: ", H)
+			case 3:
+				print("Geometric mean distance heuristics used with a gain of: ", H)
+			case 4:
+				print("Arithmetic mean distance with level shifting heuristics used with a gain of: ", H)
+			case 5:
+				print("dijkstra algorithm")
+		# Display final cost and number of iterations used
 		print("final cost: ", float("{:.1f}".format(final_cost)),"number of iterations: ", count)
 	
 		# for p in points:
