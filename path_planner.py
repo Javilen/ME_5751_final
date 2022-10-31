@@ -115,6 +115,8 @@ class path_planner:
 					val=math.sqrt(abs(x-self.goal_state_map.map_i)*abs(y-self.goal_state_map.map_j))
 				case 4:  # arithmetic mean with right shift
 					val=(abs(x-self.goal_state_map.map_i)+ abs(y-self.goal_state_map.map_j))>>1
+				case 5:
+					val=0
 			return  val
 
 
