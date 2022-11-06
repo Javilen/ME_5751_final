@@ -1,3 +1,6 @@
+# Fork for the ME5751 class
+Authors: Johnathan Deas, Sean Ye
+
 # The package is for ME5751 Simulation. Want to have a ROS version? 
 [Course website](https://sites.google.com/view/cppme5751/home)
 
