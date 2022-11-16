@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import random
+import warnings
 from PIL import Image, ImageTk
 
 from Path import *
