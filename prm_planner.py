@@ -7,6 +7,8 @@ from PIL import Image, ImageTk
 
 from Path import *
 # from Queue import Queue
+# Deas edit
+import itertools
 
 class prm_node:
 	def __init__(self,map_i=int(0),map_j=int(0)):
@@ -131,60 +133,76 @@ class path_planner:
 		# This is the function you are going to work on
 		###############################################################
 		# Edge index variables
-		a = 0  			
-		b = 0
+		cost_map_copy=np.copy(self.costmap.costmap)
+		for i in range(len(self.costmap.costmap)):
+			cost_map_copy[i][0] = math.inf
+			cost_map_copy[0][i] = math.inf
+			cost_map_copy[i][500-1] = math.inf
+			cost_map_copy[500-1][i] = math.inf
+
+		#count=itertools.count()
+		itermax=100
+
+		for count in range(itermax):
+			print("count",count)
+
+
+
+		# # Sean's work
+		# a = 0  			
+		# b = 0
 		
-		# Initialize a list to store all valid points and append the initial configuration
-		road = []
-		ri_i = self.start_state_map.map_i
-		rj_i = self.start_state_map.map_j
-		road.append([ri_i, rj_i])
+		# # Initialize a list to store all valid points and append the initial configuration
+		# road = []
+		# ri_i = self.start_state_map.map_i
+		# rj_i = self.start_state_map.map_j
+		# road.append([ri_i, rj_i])
 
-		# Main loop
-		while True:
+		# # Main loop
+		# while True:
 
-			# Pick a random point on the map and draw a straight line connecting it to the start point
-			ri_f = random.randint(0, self.map_width)
-			rj_f = random.randint(0, self.map_height) # Let's make a random number!
-			points = bresenham(ri_i, rj_i, ri_f, rj_f)
+		# 	# Pick a random point on the map and draw a straight line connecting it to the start point
+		# 	ri_f = random.randint(0, self.map_width)
+		# 	rj_f = random.randint(0, self.map_height) # Let's make a random number!
+		# 	points = bresenham(ri_i, rj_i, ri_f, rj_f)
 			
-			# Check if the line from start initial to final point hits any obstacle
-			# Initialize boolean variable for obstacle interference
-			hit_obstacle = False
+		# 	# Check if the line from start initial to final point hits any obstacle
+		# 	# Initialize boolean variable for obstacle interference
+		# 	hit_obstacle = False
 
-			# Iterate through the points in the straight line
-			for p in points:
-				# If we hit an obstacle, change the boolean variable and break out of the loop
-				if self.costmap.costmap[p[0]][p[1]] < 255: # Depends on how you set the value of obstacle
-					hit_obstacle = True
-					# print ("From %d, %d to %d, %d we hit obstalce"%(self.start_node.map_i,self.start_node.map_j,ri,rj))
-					break
+		# 	# Iterate through the points in the straight line
+		# 	for p in points:
+		# 		# If we hit an obstacle, change the boolean variable and break out of the loop
+		# 		if self.costmap.costmap[p[0]][p[1]] < 255: # Depends on how you set the value of obstacle
+		# 			hit_obstacle = True
+		# 			# print ("From %d, %d to %d, %d we hit obstalce"%(self.start_node.map_i,self.start_node.map_j,ri,rj))
+		# 			break
 
-				# If we didn't hit an obstacle, assign the coordinates as another node and append to the road
-				else:
-					# 
-					road.append([ri_f, rj_f])
+		# 		# If we didn't hit an obstacle, assign the coordinates as another node and append to the road
+		# 		else:
+		# 			# 
+		# 			road.append([ri_f, rj_f])
 
-					#self.pTree.add_nodes(random_node)
-					#self.pTree.add_edges(self.start_node, random_node) # Add an edge from start node to random node
+		# 			#self.pTree.add_nodes(random_node)
+		# 			#self.pTree.add_edges(self.start_node, random_node) # Add an edge from start node to random node
 
-			# Reinitialize variables for next loop iteration
-			ri_i = ri_f
-			rj_i = rj_f
+		# 	# Reinitialize variables for next loop iteration
+		# 	ri_i = ri_f
+		# 	rj_i = rj_f
 
-			##############################################################
+		# 	##############################################################
 
-			# If you decide the path between start_node and random_node should be within your final path, you must do:
-			points = bresenham(self.start_node.map_i, self.start_node.map_j, ri_f, rj_f)
-			for p in points:
-				self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+		# 	# If you decide the path between start_node and random_node should be within your final path, you must do:
+		# 	points = bresenham(self.start_node.map_i, self.start_node.map_j, ri_f, rj_f)
+		# 	for p in points:
+		# 		self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
 
-			# It is almost impossible for you to random a node that is coincident with goal node
-			# So everytime you randomed ri and rj, you should also check if it is within a vicinity of goal
-			# Define check_vicinity function and decide if you have reached the goal
-			if(self.check_vicinity(self.goal_node.map_i, self.goal_node.map_j, ri_f, rj_f, 2.0)):
-				print ("We hit goal!")
-				break
+		# 	# It is almost impossible for you to random a node that is coincident with goal node
+		# 	# So everytime you randomed ri and rj, you should also check if it is within a vicinity of goal
+		# 	# Define check_vicinity function and decide if you have reached the goal
+		# 	if(self.check_vicinity(self.goal_node.map_i, self.goal_node.map_j, ri_f, rj_f, 2.0)):
+		# 		print ("We hit goal!")
+		# 		break
 
 		self.path.save_path(file_name="Log\prm_path.csv")
 
