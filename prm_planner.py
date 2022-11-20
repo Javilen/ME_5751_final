@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 from Path import *
 # from Queue import Queue
 # Deas edit
-import itertools
+import copy
 
 class prm_node:
 	def __init__(self,map_i=int(0),map_j=int(0)):
@@ -123,28 +123,288 @@ class path_planner:
 		#self.path_img.show()
 		self.graphics.draw_path(self.path_img)
 
-	def check_vicinity(self,x1,y1,x2,y2,threshold = 1.0):
+	def check_vicinity(self,x1,y1,x2,y2,threshold = 10.0):
 		if(math.sqrt((x1-x2)**2+(y1-y2)**2)<threshold):
 			return True
 		else:
 			return False
 
 	def plan_path(self):
+
 		# This is the function you are going to work on
 		###############################################################
 		# Edge index variables
 		cost_map_copy=np.copy(self.costmap.costmap)
-		for i in range(len(self.costmap.costmap)):
-			cost_map_copy[i][0] = math.inf
-			cost_map_copy[0][i] = math.inf
-			cost_map_copy[i][500-1] = math.inf
-			cost_map_copy[500-1][i] = math.inf
+		# for i in range(len(self.costmap.costmap)):
+		# 	cost_map_copy[i][0] = math.inf
+		# 	cost_map_copy[0][i] = math.inf
+		# 	cost_map_copy[i][500-1] = math.inf
+		# 	cost_map_copy[500-1][i] = math.inf
+		cost_map_copy[cost_map_copy != math.inf] = 0
+		# used to for child dictionary configuration
+		seen_map=np.zeros((len(self.costmap.costmap),len(self.costmap.costmap)),dtype=bool)
+		#np.savetxt('Log/prm_map.csv',cost_map_copy, delimiter=',')
 
-		#count=itertools.count()
-		itermax=100
+		start_point=[self.start_state_map.map_i,self.start_state_map.map_j]
+		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
+		node=[self.start_state_map.map_i,self.start_state_map.map_j]
+		road=[]
+		road.append(start_point)
+		if self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j] == math.inf or self.costmap.costmap[self.goal_state_map.map_i][self.goal_state_map.map_j] == math.inf :
+			stop_flag = True
+			print("Start or end goal out of bounds")
+		else:
+			stop_flag = False
+		#road=[[1,1],[2,2],[3,3],[4,4]]
+		#print(len(road))
+		#print(road[random.randint(0,len(road)-1)])
 
-		for count in range(itermax):
-			print("count",count)
+
+		# Is a direct path possible? (instant solution)
+		easyFlag=True
+		edge=bresenham(start_point[0],start_point[1],end_point[0],end_point[1])
+		dictParent={} # dict_node_parent[str([i,j])]=[x,y]
+		dictChild={}
+		seen={}
+		for p in edge:
+			if cost_map_copy[p[0]][p[1]] == math.inf:
+				easyFlag = False
+		if easyFlag:
+			print("That was easy")
+			for p in edge:
+				self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+
+		
+		iterCount=1000000
+		flag=False
+		for id in range(iterCount):
+			count=id
+			if easyFlag or stop_flag:
+				break
+			# Set a random parent node to expand on on the established road map
+			parent=road[random.randint(0,len(road)-1)]
+			# choose a random node chosen parent
+			Pnode=[random.randint(0, self.map_width-1), random.randint(0, self.map_height-1)]
+			# reject node if it has been already assigned as a perent (we dont want a cycle)
+			if seen_map[Pnode[0]][Pnode[1]] == 1:
+				continue
+			if seen_map[parent[0]][parent[1]] == 0:
+				dictChild[str(parent)]= [Pnode]
+				seen_map[parent[0]][parent[1]] = 1
+			else:
+				dictChild[str(parent)].append(Pnode)
+			# See of there is a path to the 
+			if is_clear(cost_map_copy,parent,Pnode):
+				#print("No Collision")
+				dictParent[str([Pnode[0],Pnode[1]])] = parent # establish parent node relationship
+				road.append(Pnode)
+				if path_planner.check_vicinity(self,Pnode[0],Pnode[1],end_point[0],end_point[1]):
+					print("close enough")
+					flag=True
+					break
+		#print(road)
+		# print("Parent",dictParent)
+		# print("Child",dictChild)
+		#print("roadmap",road)
+		# for p in road:
+		# 	self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+
+		# trace back the path using the parent nodes
+		a=road.pop()
+		road_return=[]
+		road_return.append(a)
+		while a != start_point:
+			if a == start_point:
+				break
+			a=dictParent[str(a)]
+			road_return.append(a)
+		#print("road_return",road_return,"len",len(road_return))
+
+
+		# Look for a shorter path:
+		#print(road_return)
+
+		# # Look for shortcuts from the detemined path (11/20 fixed?)
+		shorter=[]
+		copy_road=copy.copy(road_return)
+		#copy_road.pop(0)
+		print("Road_return",road_return,len(road_return),"copy",copy_road,len(copy_road))
+		shorter.append(copy_road[0])
+		# for i in range(len(copy_road)):
+		trimFlag= True
+		i=0
+		while trimFlag==True:
+			if easyFlag:
+				break
+			j=1
+			while is_clear(cost_map_copy,copy_road[i],copy_road[len(copy_road)-j]) == False:
+				#print("no path to ",copy_road[len(copy_road)-j],"from ",copy_road[i] )
+				j=j+1
+			#print("Valid path to ",copy_road[len(copy_road)-j],"from ",copy_road[i] )
+			if is_clear(cost_map_copy,copy_road[i],copy_road[len(copy_road)-j]):
+				shorter.append(copy_road[len(copy_road)-j])
+			else:
+				raise Exception("there is a problem")
+			if copy_road[len(copy_road)-j] == start_point:
+				break
+			# iterate at the next farthest point
+			i = len(copy_road)-j
+		print("shorter", shorter)
+		print("iterations",count)
+		road_return=shorter
+
+
+
+
+
+		# # # Look for shortcuts from the detemined path (bugged)
+		# shorter=[]
+		# copy_road=copy.copy(road_return)
+		# #copy_road.pop(0)
+		# print("Road_return",road_return,len(road_return),"copy",copy_road,len(copy_road))
+		# shorter.append(copy_road[0])
+		# for i in range(len(copy_road)):
+		# 	if easyFlag:
+		# 		break
+		# 	j=1
+		# 	while is_clear(cost_map_copy,copy_road[i],copy_road[len(copy_road)-j]) == False:
+		# 		#print("no path to ",copy_road[len(copy_road)-j],"from ",copy_road[i] )
+		# 		j=j+1
+		# 	#print("Valid path to ",copy_road[len(copy_road)-j],"from ",copy_road[i] )
+		# 	if is_clear(cost_map_copy,copy_road[i],copy_road[len(copy_road)-j]):
+		# 		shorter.append(copy_road[len(copy_road)-j])
+		# 	else:
+		# 		raise Exception("there is a problem")
+		# 	if copy_road[len(copy_road)-j] == start_point:
+		# 		break
+		# print("shorter", shorter)
+
+
+		#road_return=shorter
+		
+		# for curent in copy_road:
+		# 	print(curent)
+		# 	value=copy_road.pop(1)
+		# 	if value == start_point:
+		# 		shorter.append(start_point)
+		# 		break
+		# 	prev=copy.copy(value)
+		# 	while is_clear(cost_map_copy,value,curent):
+		# 		if value == start_point:
+		# 			prev = value
+		# 			break
+		# 		value=copy_road.pop(1)
+		# 		prev=copy.copy(value)
+		# 		shorter.append(prev)
+		# shorter.insert(0,road_return[0])
+		# print("Shorter path",shorter)
+		#road_return=shorter
+
+		# i=1
+		# for curent in copy_road:
+
+		# 	test=copy_road.pop(0)
+		# 	if i == 1:
+		# 		test=copy_road.pop(0)
+		# 		i = 0
+		# 	#prev=copy.copy(test)
+		# 	i=0
+		# 	while is_clear(cost_map_copy,curent,test):
+		# 		if test == start_point:
+		# 			copy_road.append(start_point)
+		# 			break
+		# 		print('is good')
+		# 		prev=copy.copy(test)
+		# 		test=copy_road.pop(0)
+		# 	copy_road.append(prev)
+		# 	print("test",test,"previous",prev)
+		# print("Road_return",road_return,len(road_return),"copy",copy_road,len(copy_road))
+		# for current in copy_road:
+		# 	test=copy_road.pop(0)
+		# 	while is_clear(cost_map_copy,current,test):
+		# 		if test == start_point:
+		# 			break
+		# 		test=copy_road.pop(0)
+		# 	shorter.append(test)
+		# 	copy_road.insert(0,test)
+		# 	print("copy_road",copy_road,"Shorter",shorter)
+
+
+
+
+		# for i in copy_road:
+		# 	#copy_road=copy.copy(road_return)
+		# 	value=copy_road.pop(0)
+		# 	if value == start_point:
+		# 		shorter.append(value)
+		# 		break
+		# 	while is_clear(cost_map_copy,value,i) == True:
+		# 		if value == start_point:
+		# 			break
+		# 		value=copy_road.pop()
+		# 		print("value Popper",value)
+		# 	shorter.append(value)
+			# if value == start_point:
+			# 	break
+			# print(value)
+			# shorter.append(value)
+			#search=copy_road.pop(0)
+			#print('search',search)
+		#shorter=list(set(shorter))
+		#print("Road_return",road_return,"Shorter",shorter)
+
+
+
+		# Printing the path
+		for i in range(len(road_return)-1):
+			edge=bresenham(road_return[i][0],road_return[i][1],road_return[i+1][0],road_return[i+1][1])
+			#print(road_return[i][0],road_return[i+1][0])
+			for p in edge:
+				self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+			
+			#print(road_return[0])
+
+		# print("done",flag,"count",count, "last Node", a)
+		# if easyFlag == False:
+		# 	b=dictParent[str(a)]
+		# else:
+		# 	b=[0,0]
+		# print("last parent", b)
+		# self.path.add_pose(Pose(map_i=a[0], map_j=a[1], theta=0))
+		# self.path.add_pose(Pose(map_i=b[0], map_j=b[1], theta=0))
+		# plot everything
+		#print(road)
+		#print(dictParent)
+			# for visulization test
+			# for p in edge:
+			# 	self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+			# edge=bresenham(Pnode[0],Pnode[1],end_point[0],end_point[1])
+			# lastFlag=True
+			# for p in edge:
+			# 	if cost_map_copy[p[0]][p[1]] == math.inf:
+			# 		lastFlag = False
+			# if lastFlag == True:
+			# 	for p in edge:
+			# 		self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
+			
+			
+			
+			
+
+
+
+		
+
+
+
+		# #count=itertools.count()
+		# itermax=100
+
+		# for count in range(itermax):
+		# 	print("count",count)
+		
+
+
 
 
 
@@ -204,7 +464,18 @@ class path_planner:
 		# 		print ("We hit goal!")
 		# 		break
 
-		self.path.save_path(file_name="Log\prm_path.csv")
+		# # Save the path to observe it later
+		# self.path.save_path(file_name="Log\prm_path.csv")
+
+# determines if a path is clear between 2 nodes on a map Returns a bool
+def is_clear(map,point1,point2):
+	value=True
+	edge=bresenham(point1[0],point1[1],point2[0],point2[1])
+	for p in edge:
+		if map[p[0]][p[1]] == math.inf:
+				value=False
+				break
+	return value
 
 
 # bresenham algorithm for line generation on grid map
