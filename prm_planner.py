@@ -133,6 +133,9 @@ class path_planner:
 
 		# This is the function you are going to work on
 		###############################################################
+
+		## Configure cost map
+
 		cost_map_copy=np.copy(self.costmap.costmap)
 		cost_map_copy[cost_map_copy != math.inf] = 0
 		# used to for child dictionary configuration
@@ -143,13 +146,15 @@ class path_planner:
 		end_point=[self.goal_state_map.map_i,self.goal_state_map.map_j]
 		road=[]
 		road.append(start_point)
+
+		## determine if the start and endpoints are valid
 		if self.costmap.costmap[self.start_state_map.map_i][self.start_state_map.map_j] == math.inf or self.costmap.costmap[self.goal_state_map.map_i][self.goal_state_map.map_j] == math.inf :
 			stop_flag = True
 			print("Start or end goal out of bounds")
 		else:
 			stop_flag = False
 
-		# Is a direct path possible? (instant solution)
+		## Determine if a direct path is possible.  If so, that is our path to use.
 		easyFlag=True
 		edge=bresenham(start_point[0],start_point[1],end_point[0],end_point[1])
 		dictParent={} # dict_node_parent[str([i,j])]=[x,y]
@@ -162,7 +167,7 @@ class path_planner:
 			for p in edge:
 				self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
 
-		
+		## Single query PRM
 		iterCount=1000000
 		for id in range(iterCount):
 			count=id
@@ -187,7 +192,7 @@ class path_planner:
 				road.append(Pnode)
 				if path_planner.check_vicinity(self,Pnode[0],Pnode[1],end_point[0],end_point[1]):
 					print("close enough")
-					flag=True
+					#flag=True
 					break
 		#print(road)
 		# print("Parent",dictParent)
@@ -196,7 +201,7 @@ class path_planner:
 		# for p in road:
 		# 	self.path.add_pose(Pose(map_i=p[0], map_j=p[1], theta=0))
 
-		# trace back the path using the parent nodes
+		## trace back the path using the parent nodes
 		a=road.pop()
 		road_return=[]
 		road_return.append(a)
@@ -207,9 +212,9 @@ class path_planner:
 			road_return.append(a)
 		#print("road_return",road_return,"len",len(road_return))
 
-		# Look for a shorter path:
 		#print(road_return)
-		# # Look for shortcuts from the detemined path (11/20 fixed?)
+
+		## Look for shortcuts from the detemined path with trimming algorithm
 		shorter=[]
 		copy_road=copy.copy(road_return)
 		print("Road_return",road_return,len(road_return),"copy",copy_road,len(copy_road))
@@ -234,6 +239,7 @@ class path_planner:
 			i = len(copy_road)-j
 		print("shorter", shorter)
 		print("iterations",count)
+		# to remove path shortening algorithm comment this:
 		road_return=shorter
 
 		# Printing the path
