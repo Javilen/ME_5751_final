@@ -1,4 +1,4 @@
-# Fork for the ME5751 class:
+# Fork for the ME5751 class Final Project:
 Authors: Johnathan Deas, Sean Ye
 
 # The package is for ME5751 Simulation. Want to have a ROS version? 
