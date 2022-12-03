@@ -9,8 +9,6 @@ import itertools
 
 from bsTree import *
 from Path import *
-from cost_map import cost_map
-# from Queue import Queue
 
 
 class path_planner:
@@ -23,6 +21,9 @@ class path_planner:
 		self.costmap = self.graphics.map
 		self.map_width = self.costmap.map_width
 		self.map_height = self.costmap.map_height
+
+		self.controller = self.graphics.environment.robots[0].controller
+		self.robot = self.graphics.environment.robots[0]
 
 		self._init_path_img()
 		self.path = Path()
@@ -102,9 +103,10 @@ class path_planner:
 		# The major program you are going to write!
 		# The following simply demo that how you can add pose to path
 		self.path.clear_path()
+		self.robot.state_des.reset_destination(0,0,0)
 		# Huristic constant
-		H=12 #12
-		option = 1 # change this 1-5 to test different options 
+		H=20 #12
+		option = 4 # change this 1-5 to test different options 
 		if option > 5 or option < 0 or isinstance(option,int) ==  False :
 			option = 5
 		def Heuristics(x,y):
@@ -240,7 +242,7 @@ class path_planner:
 			points.append([self.start_state_map.map_i, self.start_state_map.map_j])
 		else:
 			print("no path possible to goal")
-		# print(points)
+		# print('the points are:',points)
 
 		# # Print maps to check
 		# np.savetxt('Log/parent_map.csv',parent_map, delimiter=',')
@@ -250,10 +252,20 @@ class path_planner:
 		# add points to the map
 		if goal_flag == False:
 			final_cost = 0
+		pp=[]
 		if goal_flag == True and stop_flag == False:
+			it=0
+			points.reverse()
 			for p in points:
+				it=it+1
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
-			self.path.print_path()
+				if it > 32:
+					#print("p0",p[0],"p1",p[1])
+					self.robot.state_des.add_destination(p[1]-250,250-p[0],math.atan2(pp[0]-p[0],p[1]-pp[1]))
+					it=0
+				pp=p  # Previous point to get the angle correct
+			self.robot.state_des.add_destination(end_point[1]-250,250-end_point[0],math.atan2(pp[0]-p[0],p[1]-pp[1]))
+			#self.path.print_path()
 		# print type of heristics used
 		# match option:
 		# 	case 1:
