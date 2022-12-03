@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from calendar import c
-from sys import float_repr_style
+#from calendar import c
+#from sys import float_repr_style
 from E160_state import *
 from E160_robot import *
 import math
 import time
+import dwa
 
 
 class P_controller:
@@ -30,13 +31,14 @@ class P_controller:
 	#Edit goal point list below, if you click a point using mouse, the points programmed
 	#will be washed out
 	def set_goal_points(self):
+		do_nothing=None
 		# here is the example of destination code
 		
-		self.robot.state_des.add_destination(x=120,y=130,theta=-0.43)  #goal point 1
-		self.robot.state_des.add_destination(x=190,y=-0,theta=2.1)     #goal point 2
-		self.robot.state_des.add_destination(x=-150,y=-175,theta=0)    #goal point 3
-		self.robot.state_des.add_destination(x=-150,y=-25,theta=-1.57) #goal point 4
-		self.robot.state_des.add_destination(x=-25,y=200,theta=2.5)    #goal point 5
+	# 	self.robot.state_des.add_destination(x=120,y=130,theta=-0.43)  #goal point 1
+	# 	self.robot.state_des.add_destination(x=190,y=-0,theta=2.1)     #goal point 2
+	# 	self.robot.state_des.add_destination(x=-150,y=-175,theta=0)    #goal point 3
+	# 	self.robot.state_des.add_destination(x=-150,y=-25,theta=-1.57) #goal point 4
+	# 	self.robot.state_des.add_destination(x=-25,y=200,theta=2.5)    #goal point 5
 
 
 	def track_point(self):
@@ -105,7 +107,7 @@ class P_controller:
 			#self.robot.log_data([ c_posX , rho , d_theta, alpha, beta ])
 			self.robot.log_data([c_posX,c_posY,c_vix,c_viy,c_wi,c_theta,d_posX,d_posY,d_theta ])
 
-		if abs(rho) < self.finish and abs(d_theta - c_theta) < 0.1: #you need to modify the reach way point criteria  if abs(c_posX - d_posX) < 80:
+		if abs(rho) < self.finish and abs(d_theta - c_theta) < 8: #you need to modify the reach way point criteria  if abs(c_posX - d_posX) < 80:
 			if(self.robot.state_des.reach_destination()): 
 				print("final goal reached")
 				self.robot.set_motor_control(.0, .0)  # stop the motor
