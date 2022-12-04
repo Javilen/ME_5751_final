@@ -8,6 +8,7 @@ from E160_robot import *
 import math
 import time
 import dwa
+from cost_map import *
 
 
 class P_controller:
@@ -17,10 +18,28 @@ class P_controller:
 		self.kp = 5  # k_rho
 		self.ka = 12  # k_alpha
 		self.kb = -1.5  # k_beta
-		self.finish = 1
+		self.finish = 10  # finish distance requirement
 		self.fltrC_w = 50
 		self.fltrC_v = 100
 		self.logging = logging
+
+		# __init__ for DWA approach
+		self.base = [-3., -2.5, +3., +2.5]#[-3.0, -2.5, +3.0, +2.5]
+		self.config = dwa.Config(
+                max_speed = 30.0,  # 3.0 # 16.0 30
+                min_speed = -70.0, # -1.0  # -5.0 -7.0
+                max_yawrate = np.radians(310.0),    # np.radians(40.0), # np.radians(310.0), np.radians(210.0),
+                max_accel = 15.0, #15
+                max_dyawrate = np.radians(410.0),  # np.radians(110.0)  # np.radians(410.0), np.radians(310.0),
+                velocity_resolution = 0.1,
+                yawrate_resolution = np.radians(1.0),
+                dt = 0.1,
+                predict_time = 0.3, # 3.0  # is this the key?
+                heading = 0.15,   # 0.15  # 5.15
+                clearance = 0.1,  # 1.0
+                velocity = 2.0,  # 1.0  # 3.0
+                base = self.base)
+
 
 		if(logging == True):
 			#self.robot.make_headers(['pos_X','posY','posZ','vix','viy','wi','vr','wr'])
@@ -34,11 +53,11 @@ class P_controller:
 		do_nothing=None
 		# here is the example of destination code
 		
-	# 	self.robot.state_des.add_destination(x=120,y=130,theta=-0.43)  #goal point 1
-	# 	self.robot.state_des.add_destination(x=190,y=-0,theta=2.1)     #goal point 2
-	# 	self.robot.state_des.add_destination(x=-150,y=-175,theta=0)    #goal point 3
-	# 	self.robot.state_des.add_destination(x=-150,y=-25,theta=-1.57) #goal point 4
-	# 	self.robot.state_des.add_destination(x=-25,y=200,theta=2.5)    #goal point 5
+		# self.robot.state_des.add_destination(x=120,y=130,theta=-0.43)  #goal point 1
+		# self.robot.state_des.add_destination(x=190,y=-0,theta=2.1)     #goal point 2
+		# self.robot.state_des.add_destination(x=-150,y=-175,theta=0)    #goal point 3
+		# self.robot.state_des.add_destination(x=-150,y=-25,theta=-1.57) #goal point 4
+		# self.robot.state_des.add_destination(x=-25,y=200,theta=2.5)    #goal point 5
 
 
 	def track_point(self):
@@ -53,33 +72,62 @@ class P_controller:
 		(c_vix, c_viy, c_wi) = self.robot.state.get_global_vel_state() #get current velocity configuration, in the global frame
 		(c_v, c_w) = self.robot.state.get_local_vel_state() #get current local velocity configuration
 
+		#Dynamic Window approach
+		poise=(c_posX,c_posY,c_theta)
+		velocity=(c_v,c_w)
+		goal=(d_posX,d_posY)
+		point_cloud=np.array([[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000]], dtype=np.float32)
+		#print(self.costmap.cost_map.get_cloud())
 
-		# Most of your program should be here, compute rho, alpha and beta using d_pos and c_pos
+		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
+		# c_v=4*c_v
+		# c_w=4*c_w
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		# # Most of your program should be here, compute rho, alpha and beta using d_pos and c_pos
 		rho=math.sqrt((d_posX-c_posX)**2+(d_posY-c_posY)**2)
-		omega=math.atan2(d_posY-c_posY,d_posX-c_posX)
-		alpha=omega-c_theta
+		# omega=math.atan2(d_posY-c_posY,d_posX-c_posX)
+		# alpha=omega-c_theta
 		
-        # Determine if forward or backwards method is to be used
-		if (- math.pi/2 < alpha <= math.pi/2):
-			beta = d_theta - omega # beta=omega-d_theta
-			c_v= self.kp*rho
-		else:
-			omega=math.atan2(d_posY-c_posY,c_posX-d_posX)
-			beta= -(omega + d_theta)  # beta= omega + d_theta
-			alpha =  c_theta + beta # - c_theta - beta
-			c_v= -self.kp*rho
+        # # Determine if forward or backwards method is to be used
+		# if (- math.pi/2 < alpha <= math.pi/2):
+		# 	beta = d_theta - omega # beta=omega-d_theta
+		# 	c_v= self.kp*rho
+		# else:
+		# 	omega=math.atan2(d_posY-c_posY,c_posX-d_posX)
+		# 	beta= -(omega + d_theta)  # beta= omega + d_theta
+		# 	alpha =  c_theta + beta # - c_theta - beta
+		# 	c_v= -self.kp*rho
 		
-        # Saturation filter for velocity
-		if c_v > self.fltrC_v: c_v = self.fltrC_v
-		if c_v < -self.fltrC_v: c_v = -self.fltrC_v
+        # # Saturation filter for velocity
+		# if c_v > self.fltrC_v: c_v = self.fltrC_v
+		# if c_v < -self.fltrC_v: c_v = -self.fltrC_v
 
-		c_w=self.ka*alpha + self.kb*beta
-		# Saturation filter for angular velocity
-		if abs(c_w) > self.fltrC_w:
-			if abs(c_w) == self.fltrC_w:
-				c_w = self.fltrC_w
-			else:
-				c_w = -self.fltrC_w
+		# c_w=self.ka*alpha + self.kb*beta
+		# # Saturation filter for angular velocity
+		# if abs(c_w) > self.fltrC_w:
+		# 	if abs(c_w) == self.fltrC_w:
+		# 		c_w = self.fltrC_w
+		# 	else:
+		# 		c_w = -self.fltrC_w
 		
 		# self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
 		self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
@@ -89,15 +137,16 @@ class P_controller:
 		phi_l = (1/3)*c_v +4*c_w
 		phi_r = (1/3)*c_v -4*c_w
 		
-		if phi_l > 16: phi_l =16
+		if phi_l > 16.: phi_l =16.
 
-		if phi_l < -16: phi_l = -16
+		if phi_l < -16.: phi_l = -16.
 
-		if phi_r > 16: phi_r = 16
+		if phi_r > 16.: phi_r = 16.
 
-		if phi_r < -16: phi_r = -16
+		if phi_r < -16.: phi_r = -16.
 
-		self.robot.send_wheel_speed(float("{:.1f}".format(phi_l)),float("{:.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
+		self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
+		# self.robot.send_wheel_speed(float("{:.1f}".format(phi_l)),float("{:.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
 
 
 		# use the following to log the variables, use [] to bracket all variables you want to store
@@ -107,7 +156,7 @@ class P_controller:
 			#self.robot.log_data([ c_posX , rho , d_theta, alpha, beta ])
 			self.robot.log_data([c_posX,c_posY,c_vix,c_viy,c_wi,c_theta,d_posX,d_posY,d_theta ])
 
-		if abs(rho) < self.finish and abs(d_theta - c_theta) < 8: #you need to modify the reach way point criteria  if abs(c_posX - d_posX) < 80:
+		if abs(rho) < self.finish:# and abs(d_theta - c_theta) < 8: #you need to modify the reach way point criteria  if abs(c_posX - d_posX) < 80:
 			if(self.robot.state_des.reach_destination()): 
 				print("final goal reached")
 				self.robot.set_motor_control(.0, .0)  # stop the motor
