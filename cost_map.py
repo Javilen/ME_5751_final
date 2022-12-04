@@ -11,6 +11,8 @@ class cost_map:
 		self.graphics = graphics
 		# self.graphics.scale = 400 # This value should be same as the pixel value of the image
 		self.inflation_radius = 18 # radius of our robot is 18 pixel or cm
+		self.cloud=[]  # cloudmap
+		self.got_cloud= False
 		self.gravity_scale = 10 # set the scale factor of the gravity map
 		self.graphics.environment.robots[0].set_bot_size(body_cm = 2*self.inflation_radius)
 		#self.graphics.environment.width/height = 2
@@ -127,6 +129,21 @@ class cost_map:
 
 		np.savetxt('Log/cost_map.csv',self.costmap, delimiter=',')
 		pass
+
+
+	def get_cloud(self):
+		if self.got_cloud == False:
+			self.got_cloud = True
+			cloud=[]
+			L=len(self.costmap)
+			for i in range(L):
+				for j in range(L):
+					if self.costmap[i][j]==math.inf:
+						cloud.append([i,j])
+			print("cloud: ", cloud)
+		cloud="pass the function test?"
+		return cloud
+		
 
 	#scale costmap to 0 - 255 for visualization
 	def get_vis_map(self):
