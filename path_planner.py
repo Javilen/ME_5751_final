@@ -259,12 +259,15 @@ class path_planner:
 			for p in points:
 				it=it+1
 				self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0)) #theta is wrong
+
+				# Add these as a path destination
 				if it > 32:
 					#print("p0",p[0],"p1",p[1])
 					self.robot.state_des.add_destination(p[1]-250,250-p[0],math.atan2(pp[0]-p[0],p[1]-pp[1]))
 					it=0
 				pp=p  # Previous point to get the angle correct
 			self.robot.state_des.add_destination(end_point[1]-250,250-end_point[0],math.atan2(pp[0]-p[0],p[1]-pp[1]))
+			
 			#self.path.print_path()
 		# print type of heristics used
 		# match option:
