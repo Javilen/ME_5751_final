@@ -6,7 +6,6 @@
 from E160_state import *
 from E160_robot import *
 import math
-import time
 import dwa
 from cost_map import *
 
@@ -22,6 +21,8 @@ class P_controller:
 		self.fltrC_w = 50
 		self.fltrC_v = 100
 		self.logging = logging
+		self.robot_lengh = 20
+		self.robot_width = 16
 
 		# __init__ for DWA approach
 		self.base = [-3., -2.5, +3., +2.5]#[-3.0, -2.5, +3.0, +2.5]
@@ -84,16 +85,13 @@ class P_controller:
 		# c_w=4*c_w
 
 		# Overall speed of the robot
-		l=20
-		w=16
 		s = math.sqrt(c_vix**2 + c_viy**2)
 		phi = math.pi/2 - c_theta
 		
 		# Ackermann Forward Kinematics 
 		x_dot = s*math.cos(c_theta)
 		y_dot = s*math.cos(c_theta)
-		l=20
-		theta_dot = (s/l)*math.tan(phi)
+		theta_dot = (s/self.robot_lengh)*math.tan(phi)  # theta_dot = (s/l)*math.tan(phi)
 
 		c_v = math.sqrt(x_dot**2 + y_dot**2)
 		c_w = theta_dot
@@ -102,8 +100,8 @@ class P_controller:
 		# self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
 
 		# Outer wheels dynamics
-		phi_l = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) - w*math.sin(phi)))
-		phi_r = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) + w*math.sin(phi)))
+		phi_l = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) - self.robot_width*math.sin(phi)))  # phi_l = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) - w*math.sin(phi)))
+		phi_r = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) + self.robot_width*math.sin(phi)))  # phi_r = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) + w*math.sin(phi)))
 
 
 		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
@@ -166,7 +164,9 @@ class P_controller:
 
 		# if phi_r < -16.: phi_r = -16.
 
-		self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
+		self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r)))
+
+		# self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
 		# self.robot.send_wheel_speed(float("{:.1f}".format(phi_l)),float("{:.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
 
 
