@@ -26,8 +26,8 @@ class P_controller:
 		# __init__ for DWA approach
 		self.base = [-3., -2.5, +3., +2.5]#[-3.0, -2.5, +3.0, +2.5]
 		self.config = dwa.Config(
-                max_speed = 30.0,  # 3.0 # 16.0 30
-                min_speed = -70.0, # -1.0  # -5.0 -7.0
+                max_speed = 25.0,  # 3.0 # 16.0 30
+                min_speed = -7.0, # -1.0  # -5.0 -7.0
                 max_yawrate = np.radians(310.0),    # np.radians(40.0), # np.radians(310.0), np.radians(210.0),
                 max_accel = 15.0, #15
                 max_dyawrate = np.radians(410.0),  # np.radians(110.0)  # np.radians(410.0), np.radians(310.0),
@@ -35,7 +35,7 @@ class P_controller:
                 yawrate_resolution = np.radians(1.0),
                 dt = 0.1,
                 predict_time = 0.3, # 3.0  # is this the key?
-                heading = 0.15,   # 0.15  # 5.15
+                heading = 0.15,   # 0.15  # 5.15  # Weights
                 clearance = 0.1,  # 1.0
                 velocity = 2.0,  # 1.0  # 3.0
                 base = self.base)
@@ -137,13 +137,13 @@ class P_controller:
 		phi_l = (1/3)*c_v +4*c_w
 		phi_r = (1/3)*c_v -4*c_w
 		
-		if phi_l > 16.: phi_l =16.
+		# if phi_l > 16.: phi_l =16.
 
-		if phi_l < -16.: phi_l = -16.
+		# if phi_l < -16.: phi_l = -16.
 
-		if phi_r > 16.: phi_r = 16.
+		# if phi_r > 16.: phi_r = 16.
 
-		if phi_r < -16.: phi_r = -16.
+		# if phi_r < -16.: phi_r = -16.
 
 		self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
 		# self.robot.send_wheel_speed(float("{:.1f}".format(phi_l)),float("{:.1f}".format(phi_r))) #unit rad/s phi_l = 6.0,phi_r = 6.0
