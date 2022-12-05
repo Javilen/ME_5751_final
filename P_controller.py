@@ -79,13 +79,34 @@ class P_controller:
 		point_cloud=np.array([[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000]], dtype=np.float32)
 		#print(self.costmap.cost_map.get_cloud())
 
-		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
+		# c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
 		# c_v=4*c_v
 		# c_w=4*c_w
 
+		# Overall speed of the robot
+		l=20
+		w=16
+		s = math.sqrt(c_vix**2 + c_viy**2)
+		phi = math.pi/2 - c_theta
+		
+		# Ackermann Forward Kinematics 
+		x_dot = s*math.cos(c_theta)
+		y_dot = s*math.cos(c_theta)
+		l=20
+		theta_dot = (s/l)*math.tan(phi)
+
+		c_v = math.sqrt(x_dot**2 + y_dot**2)
+		c_w = theta_dot
+
+		# self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
+		# self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
+
+		# Outer wheels dynamics
+		phi_l = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) - w*math.sin(phi)))
+		phi_r = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) + w*math.sin(phi)))
 
 
-
+		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
 
 
 
@@ -134,8 +155,8 @@ class P_controller:
 		
 		# you need to write code to find the wheel speed for your c_v, and c_w, the program won't calculate it for you.
 		# my fun attempt Deas
-		phi_l = (1/3)*c_v +4*c_w
-		phi_r = (1/3)*c_v -4*c_w
+		# phi_l = (1/3)*c_v +4*c_w
+		# phi_r = (1/3)*c_v -4*c_w
 		
 		# if phi_l > 16.: phi_l =16.
 
