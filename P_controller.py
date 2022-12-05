@@ -107,62 +107,12 @@ class P_controller:
 		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		# # Most of your program should be here, compute rho, alpha and beta using d_pos and c_pos
 		rho=math.sqrt((d_posX-c_posX)**2+(d_posY-c_posY)**2)
-		# omega=math.atan2(d_posY-c_posY,d_posX-c_posX)
-		# alpha=omega-c_theta
-		
-        # # Determine if forward or backwards method is to be used
-		# if (- math.pi/2 < alpha <= math.pi/2):
-		# 	beta = d_theta - omega # beta=omega-d_theta
-		# 	c_v= self.kp*rho
-		# else:
-		# 	omega=math.atan2(d_posY-c_posY,c_posX-d_posX)
-		# 	beta= -(omega + d_theta)  # beta= omega + d_theta
-		# 	alpha =  c_theta + beta # - c_theta - beta
-		# 	c_v= -self.kp*rho
-		
-        # # Saturation filter for velocity
-		# if c_v > self.fltrC_v: c_v = self.fltrC_v
-		# if c_v < -self.fltrC_v: c_v = -self.fltrC_v
 
-		# c_w=self.ka*alpha + self.kb*beta
-		# # Saturation filter for angular velocity
-		# if abs(c_w) > self.fltrC_w:
-		# 	if abs(c_w) == self.fltrC_w:
-		# 		c_w = self.fltrC_w
-		# 	else:
-		# 		c_w = -self.fltrC_w
 		
 		# self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
 		self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
 		
-		# you need to write code to find the wheel speed for your c_v, and c_w, the program won't calculate it for you.
-		# my fun attempt Deas
-		# phi_l = (1/3)*c_v +4*c_w
-		# phi_r = (1/3)*c_v -4*c_w
-		
-		# if phi_l > 16.: phi_l =16.
-
-		# if phi_l < -16.: phi_l = -16.
-
-		# if phi_r > 16.: phi_r = 16.
-
-		# if phi_r < -16.: phi_r = -16.
 
 		self.robot.send_wheel_speed(float("{:06.1f}".format(phi_l)),float("{:06.1f}".format(phi_r)))
 
