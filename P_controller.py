@@ -23,11 +23,13 @@ class P_controller:
 		self.logging = logging
 		self.robot_lengh = 20
 		self.robot_width = 16
+		self.robot_max_speed = 25
+		self.robot_ack_steer= math.tan((2*math.pi/9))  # Max stearing angle of 40 degrees (2pi/9 rad)
 
 		# __init__ for DWA approach
 		self.base = [-3., -2.5, +3., +2.5]#[-3.0, -2.5, +3.0, +2.5]
 		self.config = dwa.Config(
-                max_speed = 25.0,  # 3.0 # 16.0 30
+                max_speed = self.robot_max_speed,  # 3.0 # 16.0 30 25.0,
                 min_speed = -7.0, # -1.0  # -5.0 -7.0
                 max_yawrate = np.radians(310.0),    # np.radians(40.0), # np.radians(310.0), np.radians(210.0),
                 max_accel = 15.0, #15
@@ -71,38 +73,61 @@ class P_controller:
 
 		(c_posX, c_posY, c_theta) = self.robot.state.get_pos_state()  # get current position configuration
 		(c_vix, c_viy, c_wi) = self.robot.state.get_global_vel_state() #get current velocity configuration, in the global frame
+		# c_v - Linear speed  c_w - Rotational Velocity
 		(c_v, c_w) = self.robot.state.get_local_vel_state() #get current local velocity configuration
+
+		# Ackermann steering restriction (40 degrees) imposed on c_w
+		if abs(c_w) > (c_v/self.robot_lengh)*self.robot_ack_steer:
+			if abs(c_w) == c_w:
+				c_w=(c_v/self.robot_lengh)*self.robot_ack_steer
+			else:
+				c_w=-(c_v/self.robot_lengh)*self.robot_ack_steer
+			# print("no turning in place restriction:", c_w)
+
+		# wheel speed calculation
+
+		# phi_l = c_v
+		# phi_r = c_v
+
+		if abs(c_v) < 10**(-2):
+			phi_l = c_v
+			phi_r = c_v
+		else:
+			R=(self.robot_lengh**2)*(c_w)/c_v
+
+			phi_l=c_v*((math.sqrt((R-self.robot_width/2)**2+(self.robot_lengh)**2))/(math.sqrt((R)**2+(self.robot_lengh)**2)))
+			phi_r=c_v*((math.sqrt((R+self.robot_width/2)**2+(self.robot_lengh)**2))/(math.sqrt((R)**2+(self.robot_lengh)**2)))
+
+
+
+
+		# Seans approach
+
+		# # Overall speed of the robot
+		# s = math.sqrt(c_vix**2 + c_viy**2)
+		# phi = math.pi/2 - c_theta
+		
+		# # Ackermann Forward Kinematics 
+		# x_dot = s*math.cos(c_theta)
+		# y_dot = s*math.cos(c_theta)
+		# theta_dot = (s/self.robot_lengh)*math.tan(phi)  # theta_dot = (s/l)*math.tan(phi)
+
+		# c_v = math.sqrt(x_dot**2 + y_dot**2)
+		# c_w = theta_dot
+
+		# # self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
+		# # self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
+
+		# # Outer wheels dynamics
+		# phi_l = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) - self.robot_width*math.sin(phi)))  # phi_l = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) - w*math.sin(phi)))
+		# phi_r = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) + self.robot_width*math.sin(phi)))  # phi_r = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) + w*math.sin(phi)))
+
 
 		#Dynamic Window approach
 		poise=(c_posX,c_posY,c_theta)
 		velocity=(c_v,c_w)
 		goal=(d_posX,d_posY)
 		point_cloud=np.array([[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000],[3000,3000]], dtype=np.float32)
-		#print(self.costmap.cost_map.get_cloud())
-
-		# c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
-		# c_v=4*c_v
-		# c_w=4*c_w
-
-		# Overall speed of the robot
-		s = math.sqrt(c_vix**2 + c_viy**2)
-		phi = math.pi/2 - c_theta
-		
-		# Ackermann Forward Kinematics 
-		x_dot = s*math.cos(c_theta)
-		y_dot = s*math.cos(c_theta)
-		theta_dot = (s/self.robot_lengh)*math.tan(phi)  # theta_dot = (s/l)*math.tan(phi)
-
-		c_v = math.sqrt(x_dot**2 + y_dot**2)
-		c_w = theta_dot
-
-		# self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
-		# self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
-
-		# Outer wheels dynamics
-		phi_l = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) - self.robot_width*math.sin(phi)))  # phi_l = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) - w*math.sin(phi)))
-		phi_r = math.atan(2*self.robot_lengh*math.sin(phi)/(2*self.robot_lengh*math.cos(phi) + self.robot_width*math.sin(phi)))  # phi_r = math.atan(2*l*math.sin(phi)/(2*l*math.cos(phi) + w*math.sin(phi)))
-
 
 		c_v, c_w = dwa.planning(poise,velocity,goal,point_cloud,self.config)
 
