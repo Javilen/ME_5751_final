@@ -141,7 +141,7 @@ class E160_graphics:
 		self.left_speed.config(text="left wheel speed "+str(robot.state.phi_l))
 		self.right_speed.config(text="right wheel speed "+str(robot.state.phi_r))
 		
-		if(abs(robot.state.phi_l)>16 or abs(robot.state.phi_r)>16):
+		if(abs(robot.state.phi_l)>40 or abs(robot.state.phi_r)>40):
 			self.impossible+=1
 
 		self.wrong.config(text="impossible frame "+str(self.impossible))
