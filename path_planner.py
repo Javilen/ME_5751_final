@@ -30,7 +30,30 @@ class path_planner:
 
 	
 		self.set_start(world_x = 0, world_y = 0)
-		self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+		self.set_goal(world_x = -210., world_y = -205, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+
+
+		# All start position 0,0
+		# Map_1 destinations in world frame
+
+		# (200, 0)
+		# (-200, -142)
+
+		# Map_2 destinations in world frame
+
+		# (-210, 205)
+		# (222, -165)
+
+		# Map_3 destination in world frame
+		# (205, 211)
+		# (-220, 0)
+
+		# Map_4 destination in world frame
+		# (-124, -89)
+		# (199, -180)
+
+		# (-210, -222)
+
 
 		self.plan_path()
 		self._show_path()
