@@ -10,7 +10,7 @@ class cost_map:
 	def __init__(self,graphics):
 		self.graphics = graphics
 		# self.graphics.scale = 400 # This value should be same as the pixel value of the image
-		self.inflation_radius = 25 # radius of our robot is 18 pixel or cm  18
+		self.inflation_radius = 18 # radius of our robot is 18 pixel or cm  18
 		self.cloud=[]  # cloudmap
 		self.got_cloud= False
 		self.gravity_scale = 10 # set the scale factor of the gravity map
@@ -19,7 +19,7 @@ class cost_map:
 		self.map_width = int(self.graphics.environment.width*self.graphics.scale)
 		self.map_height = int(self.graphics.environment.height*self.graphics.scale)
 		try:
-			self.load_map(map = "maps/map_2.png") #load map  maps/testmap.png  maps/smol_test_map.png  self.load_map(map = "maps/Group_testmap3.png")
+			self.load_map(map = "maps/map_4.png") #load map  maps/testmap.png  maps/smol_test_map.png  self.load_map(map = "maps/Group_testmap3.png")
 		except:
 			self.graphics.show_map_button.configure(state="disabled")
 			print ("no map loaded") #if fail to find the map png

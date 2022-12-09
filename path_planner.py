@@ -30,7 +30,7 @@ class path_planner:
 
 	
 		self.set_start(world_x = 0, world_y = 0)
-		self.set_goal(world_x = -210., world_y = -205, world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
+		self.set_goal(world_x = -199., world_y = -180., world_theta = .0)  #self.set_goal(world_x = 100.0, world_y = 200.0, world_theta = .0)
 
 
 		# All start position 0,0
