@@ -89,11 +89,12 @@ class P_controller:
 		# phi_l = c_v
 		# phi_r = c_v
 
-		if abs(c_v) < 10**(-2):
+		if abs(c_w) < 10**(-2):  # abs(c_v) < 10**(-2):
 			phi_l = c_v
 			phi_r = c_v
 		else:
-			R=(self.robot_lengh**2)*(c_w)/c_v
+			# R=(self.robot_lengh**2)*(c_w)/c_v
+			R=c_v/c_w
 
 			phi_l=c_v*((math.sqrt((R-self.robot_width/2)**2+(self.robot_lengh)**2))/(math.sqrt((R)**2+(self.robot_lengh)**2)))
 			phi_r=c_v*((math.sqrt((R+self.robot_width/2)**2+(self.robot_lengh)**2))/(math.sqrt((R)**2+(self.robot_lengh)**2)))
